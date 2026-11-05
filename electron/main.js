@@ -42,6 +42,8 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 900, minHeight: 600,
     title: 'Legendary DevOps',
+    // Logo de la fenêtre et de la barre des tâches (l'exécutable packagé a déjà le sien via electron-builder).
+    icon: path.join(dirname, process.env.VITE_DEV_SERVER_URL ? '../public/icon.png' : '../dist/icon.png'),
     show: process.env.DEVOPS_QUIZ_SMOKE !== '1',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#121633' : '#FAFAFD',
     webPreferences: { preload: path.join(dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },

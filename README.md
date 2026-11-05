@@ -84,11 +84,13 @@ npm run dist:mac     # sur un Mac uniquement : release/Legendary-DevOps-<version
 
 ## Enregistrer dans Git
 
-Le dépôt Git se trouve dans WSL (`~/Side_projects/Legendary-Devops`). Après une série de modifications, depuis WSL :
+Le dépôt Git est le dossier du projet côté Windows, mais Git s'utilise **depuis WSL** (clé SSH configurée dans WSL). Le code se lance toujours dans PowerShell (`npm run dev`, `npm run build`…).
 
 ```bash
-bash /mnt/c/Users/delph/.gemini/antigravity/scratch/devops-quiz/scripts/transfert-vers-git.sh --message "Ce qui a changé"
-cd ~/Side_projects/Legendary-Devops && git push
+cd /mnt/c/Users/delph/.gemini/antigravity/scratch/devops-quiz
+git add -A
+git commit -m "Ce qui a changé"
+git push
 ```
 
-Le script copie le projet sans `node_modules`, `dist`, `release` ni les captures de test, puis crée le commit. Ajouter `--miroir` pour supprimer aussi dans le dépôt les fichiers retirés du projet.
+`node_modules`, `dist`, `dist-electron`, `release` et `.test-artifacts` sont ignorés (`.gitignore`). Les fins de ligne sont enregistrées au format LF (`.gitattributes`). Le dépôt a `core.fileMode false` : sous `/mnt/c`, tous les fichiers paraissent exécutables, ce réglage évite de faux changements.

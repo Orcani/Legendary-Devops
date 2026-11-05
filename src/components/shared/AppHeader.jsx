@@ -15,7 +15,10 @@ const ONGLETS = [
 export default function AppHeader({ titre, sousTitre }) {
   return <header className="mb-8">
     <div className="flex items-center justify-between gap-4">
-      <Link to="/" className="text-lg font-extrabold tracking-tight">Legendary DevOps</Link>
+      <Link to="/" className="inline-flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+        <img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" width="32" height="32" className="w-8 h-8 rounded-lg"/>
+        Legendary DevOps
+      </Link>
       <ThemeToggle discret/>
     </div>
     <nav aria-label="Navigation principale" className="mt-3 flex gap-1 border-b border-slate-200 dark:border-slate-800">

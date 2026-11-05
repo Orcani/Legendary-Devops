@@ -82,7 +82,7 @@ async function main() {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve))
     win = new BrowserWindow({ show:false, webPreferences: { contextIsolation:true, nodeIntegration:false } })
     await win.loadURL('http://127.0.0.1:' + server.address().port)
-    await until("!!document.querySelector('[data-testid=module-linux-fondamentaux]')")
+    await until("!!document.querySelector('[data-testid=overview]')") // l'accueil (progression) est affiché
     assert.equal(await run('typeof window.electronAPI'), 'undefined')
     await run("location.hash = '#/module/linux-fondamentaux'")
     await until("!!document.querySelector('[data-testid=scope-seen]')")
@@ -126,10 +126,10 @@ async function main() {
   win.webContents.setBackgroundThrottling(false)
   const errors = []
   win.webContents.on('console-message', (_,level,message) => { if (level === 3) errors.push(message) })
-  await until("!!document.querySelector('[data-testid=module-linux-fondamentaux]')")
+  await until("!!document.querySelector('[data-testid=overview]')") // l'accueil (progression) est affiché
   assert.equal(await run('typeof window.electronAPI.saveSession'),'function')
   if (phase === 'first') {
-    await capture('dashboard-dark'); await start(); await correct()
+    await capture('accueil'); await start(); await correct()
     const hash = await run('location.hash')
     await run("document.querySelector('[data-codex-id=fhs]').click()"); await until("!!document.querySelector('[role=dialog]')")
     // Le bouton porte le nom du terme tel qu'écrit dans dataApp.json (pas son id).

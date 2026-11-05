@@ -127,10 +127,10 @@ devops-quiz/
 │   └── progression.js         ← calcul XP / niveaux / stats (main ET navigateur)
 ├── public/
 │   ├── data/dataApp.json      ← tout le contenu éditable
-│   └── icon.svg               ← favicon
+│   ├── icon.svg               ← logo (favicon, en-tête de l'application)
+│   └── icon.png               ← logo 512 px (fenêtre et barre des tâches Electron)
 ├── scripts/
 │   ├── check-node.cjs         ← vérifie Node ≥ 22.12 avant npm install
-│   ├── transfert-vers-git.sh  ← copie le projet vers le dépôt Git (WSL) et crée un commit
 │   ├── validate-data.mjs      ← vérification de dataApp.json (lancée par npm run build)
 │   ├── progression.test.js    ← tests unitaires (node --test)
 │   ├── electron-smoke.cjs     ← parcours réel Electron + navigateur
@@ -393,7 +393,7 @@ Intention : **tech, mais en évolution, pas geek** — des notions reliées qui 
 - **Couleurs sémantiques conservées** : vert/rouge (avec icônes) pour juste/faux, ambre pour « à retravailler ». La couleur propre à chaque module reste un repère.
 - **Priorités sans alarme** : P1 indigo plein, P2 brume, P3 contour. Plus de rouge.
 - **Police** : Lexend (`@fontsource-variable/lexend`), conçue pour faciliter la lecture ; JetBrains Mono pour le code.
-- **Icône** : fond indigo dégradé, trois notions (points brume) reliées par un trait lavande qui monte vers un objectif soleil. Source `public/icon.svg`, export `build/icon.png` (1024 px).
+- **Icône / logo** : fond indigo dégradé, trois notions (points brume) reliées par un trait lavande qui monte vers un objectif soleil. Source `public/icon.svg` (aussi affichée à côté du nom dans l'en-tête), `public/icon.png` 512 px (fenêtre Electron), `build/icon.png` 1024 px (installateurs).
 - Focus clavier : contour `#5B67CF`, visible sur fond clair et sombre.
 
 ### 8.2 QuizView
@@ -763,6 +763,6 @@ Chaque nouveau module et sous-module arrive avec son `resume` de 2-3 phrases : �
 | D-28 | 2026-11-05 | CSP injectée au build seulement | En développement, le rechargement à chaud de Vite utilise des scripts en ligne |
 | D-31 | 2026-11-05 | La page de progression devient l'**accueil** (`/`) ; onglets Accueil / Modules / Codex ; Modules passe en `/modules` | Elle réunit progression, points à revoir et sessions : c'est le bon point de départ à chaque ouverture |
 | D-32 | 2026-11-05 | **Identité « Parcours + soleil »** : piste B (indigo, lavande, Lexend, icône « notions reliées ») avec le jaune de la piste C à la place du vert ; le jaune signifie la progression ; priorités sans rouge ; thème par défaut = système | Choix de la propriétaire du projet après comparaison de trois pistes (audit du 5 novembre). Remplace l'apparence « outil de développeur » (gris/bleu Tailwind, mode nuit par défaut, icône infini) |
-| D-33 | 2026-11-05 | Dépôt Git dans WSL (`~/Side_projects/Legendary-Devops`) ; le développement continue dans le dossier Windows, synchronisé par `scripts/transfert-vers-git.sh` | Electron, `npm run dev` et l'installateur Windows fonctionnent nativement côté Windows ; le dépôt garde l'historique. Usage personnel : la propriétaire est la principale testeuse |
+| D-33 | 2026-11-05 | Le dépôt Git est le dossier du projet côté **Windows**, piloté avec le Git de **WSL** via `/mnt/c/…` (`core.fileMode false`) ; npm et Electron restent côté Windows | Un seul dossier pour coder et versionner ; la clé SSH GitHub est configurée dans WSL, pas sous Windows. Usage personnel : la propriétaire est la principale testeuse |
 | D-29 | 2026-11-05 | Seul `electron-store` en `dependencies` | Le reste est intégré par Vite ; l'application packagée reste légère |
 | D-30 | 2026-11-05 | Node.js ≥ 22.12 exigé, vérifié avant `npm install` | Electron 44 ne s'installe pas avec Node 18 (fin de support en avril 2025) ; l'erreur d'origine (`ERR_REQUIRE_ESM`) était incompréhensible |
