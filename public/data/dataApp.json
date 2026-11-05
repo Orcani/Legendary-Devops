@@ -1,0 +1,287 @@
+{
+  "modules": [
+    {
+      "id": "linux-fondamentaux",
+      "label": "Linux — Fondamentaux DevSecOps",
+      "description": "Architecture, FHS, permissions, processus, signaux, APT, systemd, journalctl, SSH, Bash",
+      "resume": "Le socle de tout poste DevOps : comprendre comment un système Linux est organisé, qui a le droit de faire quoi et comment tournent les services. Vous apprendrez à vous repérer dans l'arborescence, à gérer les permissions et à diagnostiquer un service avec systemd et journalctl.",
+      "icon": "terminal",
+      "couleur": "#FCC624",
+      "priorite": "P1",
+      "lien_cours": "https://www.stephane-robert.info/docs/admin-serveurs/linux/",
+      "concepts_cles": [
+        "FHS",
+        "permissions",
+        "sudo",
+        "processus",
+        "signaux",
+        "systemd",
+        "journalctl",
+        "SSH",
+        "Bash"
+      ],
+      "sous_modules": [
+        {
+          "id": "linux-arborescence",
+          "label": "Arborescence & FHS",
+          "resume": "Comment les fichiers sont rangés selon le standard FHS : /etc pour la configuration, /var pour les données qui changent, /home pour les utilisateurs. Vous saurez distinguer un chemin absolu d'un chemin relatif et naviguer sans hésiter dans le shell.",
+          "priorite": "P1"
+        },
+        {
+          "id": "linux-droits",
+          "label": "Droits et permissions",
+          "resume": "Lire et modifier les droits d'un fichier (lecture, écriture, exécution pour le propriétaire, le groupe et les autres) avec chmod et chown. Vous verrez aussi quand utiliser sudo et pourquoi le principe du moindre privilège compte en production.",
+          "priorite": "P1"
+        },
+        {
+          "id": "linux-services",
+          "label": "Services systemd & logs",
+          "resume": "Démarrer, arrêter et activer un service avec systemctl, puis lire ses journaux avec journalctl. C'est le réflexe de base pour comprendre pourquoi une application ne démarre pas sur un serveur.",
+          "priorite": "P1"
+        }
+      ]
+    },
+    {
+      "id": "git",
+      "label": "Git — Versioning & Collaboration",
+      "description": "Repository, staging, commits, branches, merge, rebase, cherry-pick, hooks, conflits",
+      "resume": "L'outil que vous utiliserez tous les jours : chaque pipeline CI/CD démarre par un commit. Ce module couvre le cycle de travail local (modifier, indexer, valider), puis la collaboration avec les branches, la fusion et la résolution de conflits.",
+      "icon": "git-branch",
+      "couleur": "#F05032",
+      "priorite": "P1",
+      "lien_cours": "https://www.stephane-robert.info/docs/developper/version/git/",
+      "concepts_cles": [
+        "staging",
+        "commits",
+        "branches",
+        "merge",
+        "rebase",
+        "cherry-pick",
+        "hooks",
+        "conflits"
+      ],
+      "sous_modules": [
+        {
+          "id": "git-bases",
+          "label": "Workflow & staging",
+          "resume": "Le trajet d'une modification : répertoire de travail, zone d'index (staging), puis commit. Vous apprendrez à lire git status et git log, et à écrire des commits petits et bien nommés.",
+          "priorite": "P1"
+        },
+        {
+          "id": "git-branches",
+          "label": "Branches & rebase",
+          "resume": "Travailler à plusieurs sans se gêner : créer une branche, la fusionner avec merge ou la rejouer avec rebase. Vous saurez résoudre un conflit et choisir la bonne stratégie selon les habitudes de l'équipe.",
+          "priorite": "P1"
+        }
+      ]
+    },
+    {
+      "id": "conteneurs-fondamentaux",
+      "label": "Conteneurs — Docker Fondamentaux",
+      "description": "Images, conteneurs, Dockerfile, couches, build, volumes, réseaux, Docker Compose",
+      "resume": "Docker emballe une application avec tout ce dont elle a besoin pour tourner partout de la même façon. Vous apprendrez la différence entre image et conteneur, les commandes du quotidien et l'écriture d'un Dockerfile propre.",
+      "icon": "container",
+      "couleur": "#2496ED",
+      "priorite": "P1",
+      "lien_cours": "https://www.stephane-robert.info/docs/conteneurs/moteurs-conteneurs/docker/",
+      "concepts_cles": [
+        "images",
+        "conteneurs",
+        "Dockerfile",
+        "volumes",
+        "réseaux",
+        "Docker Compose"
+      ],
+      "sous_modules": [
+        {
+          "id": "conteneurs-bases",
+          "label": "Commandes fondamentales",
+          "resume": "Les commandes du quotidien : lancer un conteneur avec docker run, le lister avec docker ps, consulter ses logs et l'arrêter. Vous comprendrez ce qui distingue une image (le modèle) d'un conteneur (l'instance qui tourne).",
+          "priorite": "P1"
+        },
+        {
+          "id": "conteneurs-dockerfile",
+          "label": "Écrire un Dockerfile",
+          "resume": "Décrire la construction d'une image instruction par instruction (FROM, RUN, COPY, CMD). Vous verrez comment fonctionnent les couches et le cache, et comment garder des images légères et sûres.",
+          "priorite": "P1"
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-linux-001",
+      "module_id": "linux-fondamentaux",
+      "sous_module_id": "linux-arborescence",
+      "difficulte": "debutant",
+      "enonce": "Que représente le symbole ~ (tilde) dans un shell Linux ?",
+      "astuce": "Ce raccourci désigne le répertoire personnel de l’utilisateur courant, dont le chemin dépend de sa configuration.",
+      "choix": [
+        {
+          "id": "a",
+          "texte": "La racine du système (/)"
+        },
+        {
+          "id": "b",
+          "texte": "Le dossier parent (..)"
+        },
+        {
+          "id": "c",
+          "texte": "Le répertoire personnel (Home)"
+        },
+        {
+          "id": "d",
+          "texte": "Le répertoire temporaire (/tmp)"
+        }
+      ],
+      "reponse_correcte": "c",
+      "explication_correcte": "C'est un raccourci très pratique qui pointe toujours vers ton dossier d'utilisateur (ex: /home/thomas ou /root pour root).",
+      "explication_erreur": "La racine du système est '/', le dossier parent est '..' et le dossier temporaire est '/tmp'. Le tilde ~ pointe vers votre dossier personnel.",
+      "termes_lexique": [
+        "fhs",
+        "bash"
+      ]
+    },
+    {
+      "id": "q-linux-002",
+      "module_id": "linux-fondamentaux",
+      "sous_module_id": "linux-arborescence",
+      "difficulte": "debutant",
+      "enonce": "Un chemin absolu se reconnaît immédiatement car...",
+      "astuce": "Un chemin absolu ne dépend jamais du répertoire de travail actuel.",
+      "choix": [
+        {
+          "id": "a",
+          "texte": "Il commence par le nom d'utilisateur"
+        },
+        {
+          "id": "b",
+          "texte": "Il commence par un /"
+        },
+        {
+          "id": "c",
+          "texte": "Il ne contient pas d'espaces"
+        },
+        {
+          "id": "d",
+          "texte": "Il se termine par une extension de fichier"
+        }
+      ],
+      "reponse_correcte": "b",
+      "explication_correcte": "Un chemin absolu part TOUJOURS de la racine du système, donc du premier '/'.",
+      "explication_erreur": "Un chemin absolu commence obligatoirement par la racine du système '/'. S'il ne commence pas par '/', il s'agit d'un chemin relatif.",
+      "termes_lexique": [
+        "fhs"
+      ]
+    },
+    {
+      "id": "q-docker-001",
+      "module_id": "conteneurs-fondamentaux",
+      "sous_module_id": "conteneurs-bases",
+      "difficulte": "intermediaire",
+      "enonce": "Quelle commande permet de lister tous les conteneurs Docker, y compris ceux qui sont arrêtés ?",
+      "astuce": "Le flag '-a' signifie 'all' dans la plupart des commandes Docker.",
+      "choix": [
+        {
+          "id": "a",
+          "texte": "docker ps"
+        },
+        {
+          "id": "b",
+          "texte": "docker ps -a"
+        },
+        {
+          "id": "c",
+          "texte": "docker list --all"
+        },
+        {
+          "id": "d",
+          "texte": "docker container show"
+        }
+      ],
+      "reponse_correcte": "b",
+      "explication_correcte": "docker ps -a affiche tous les conteneurs, quel que soit leur état (running, exited, created…).",
+      "explication_erreur": "docker ps sans flag n'affiche que les conteneurs actifs. Les commandes 'list' et 'show' n'existent pas dans Docker.",
+      "termes_lexique": [
+        "conteneur",
+        "docker-ps"
+      ]
+    }
+  ],
+  "lexique": [
+    {
+      "id": "conteneur",
+      "terme": "Conteneur",
+      "categorie": "Conteneurs",
+      "module_id": "conteneurs-fondamentaux",
+      "definition": "Instance en cours d'exécution d'une image Docker. Un conteneur est un processus isolé partageant le noyau de l'hôte avec son propre système de fichiers et espace réseau.",
+      "role_cicd": "Dans un pipeline CI/CD, chaque étape (build, test, deploy) peut s'exécuter dans un conteneur éphémère et reproductible, garantissant l'isolation totale.",
+      "exemple": "docker run -d -p 8080:80 nginx",
+      "voir_aussi": [
+        "image-docker",
+        "dockerfile"
+      ]
+    },
+    {
+      "id": "fhs",
+      "terme": "FHS (Filesystem Hierarchy Standard)",
+      "categorie": "Linux",
+      "module_id": "linux-fondamentaux",
+      "definition": "Norme qui définit la structure des répertoires et le contenu attendu dans les systèmes d'exploitation de type UNIX et Linux.",
+      "role_cicd": "Permet de savoir exactement où sont stockés les binaires d'outils (/usr/bin), les configurations (/etc), les logs (/var/log) et les données persistantes (/var/data) sur les runners.",
+      "exemple": "ls -l /etc /var/log /opt",
+      "voir_aussi": [
+        "bash"
+      ]
+    },
+    {
+      "id": "bash",
+      "terme": "Bash",
+      "categorie": "Linux",
+      "module_id": "linux-fondamentaux",
+      "definition": "Interpréteur de commandes qui permet d’exécuter des programmes et d’automatiser des tâches sous Linux. Le symbole ~ désigne le répertoire personnel de l’utilisateur courant.",
+      "role_cicd": "Exécute des scripts de construction, de test et de déploiement sur les runners.",
+      "exemple": "printf '%s\\n' \"$HOME\"",
+      "voir_aussi": [
+        "fhs"
+      ]
+    },
+    {
+      "id": "docker-ps",
+      "terme": "docker ps",
+      "categorie": "Conteneurs",
+      "module_id": "conteneurs-fondamentaux",
+      "definition": "Commande qui liste les conteneurs actifs. L’option -a inclut aussi les conteneurs arrêtés.",
+      "role_cicd": "Vérifie l’état des conteneurs lancés pendant les tests et facilite le diagnostic des services.",
+      "exemple": "docker ps -a",
+      "voir_aussi": [
+        "conteneur"
+      ]
+    },
+    {
+      "id": "image-docker",
+      "terme": "Image Docker",
+      "categorie": "Conteneurs",
+      "module_id": "conteneurs-fondamentaux",
+      "definition": "Modèle composé de couches de système de fichiers et de métadonnées, utilisé pour créer un conteneur.",
+      "role_cicd": "Artefact construit puis publié dans un registre pour déployer une version reproductible de l’application.",
+      "exemple": "docker build -t mon-app:1.0 .",
+      "voir_aussi": [
+        "dockerfile",
+        "conteneur"
+      ]
+    },
+    {
+      "id": "dockerfile",
+      "terme": "Dockerfile",
+      "categorie": "Conteneurs",
+      "module_id": "conteneurs-fondamentaux",
+      "definition": "Fichier texte décrivant les instructions de construction d’une image Docker.",
+      "role_cicd": "Versionne la recette de construction de l’image utilisée dans le pipeline.",
+      "exemple": "FROM nginx:alpine\nCOPY ./public /usr/share/nginx/html",
+      "voir_aussi": [
+        "image-docker"
+      ]
+    }
+  ]
+}

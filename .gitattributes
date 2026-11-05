@@ -1,0 +1,5 @@
+# Fins de ligne normalisées en LF dans le dépôt (fichiers venus de Windows et de WSL).
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
