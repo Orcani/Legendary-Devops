@@ -1,0 +1,8 @@
+node_modules
+dist
+dist-electron
+release
+.test-artifacts
+package-lock.json
+public/data/dataApp.json
+*.md

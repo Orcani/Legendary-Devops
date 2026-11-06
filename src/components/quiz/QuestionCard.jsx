@@ -34,8 +34,8 @@ export default function QuestionCard({
         {liste.map((choix, i) => (
           <AnswerChoice
             key={choix.id}
-            choix={choix}
-            lettre={LETTRES[i]}
+            choice={choix}
+            letter={LETTRES[i]}
             isSelected={selectedChoice === choix.id}
             isCorrect={choix.id === question.reponse_correcte}
             isAnswered={isAnswered}
@@ -48,9 +48,10 @@ export default function QuestionCard({
       {isAnswered && (
         <FeedbackPanel
           isCorrect={isCorrect}
-          explicationCorrecte={question.explication_correcte}
-          explicationErreur={question.explication_erreur}
-          termesCodex={question.termes_lexique || []}
+          seed={question.id}
+          correctExplanation={question.explication_correcte}
+          errorExplanation={question.explication_erreur}
+          codexTerms={question.termes_lexique || []}
           onOpenCodex={onOpenCodex}
         />
       )}

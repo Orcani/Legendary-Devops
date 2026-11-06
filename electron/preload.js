@@ -35,5 +35,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
    * @param {{ questionId: string, selectedChoice: 'a'|'b'|'c'|'d' }[]} session.answers
    * @returns {Promise<{ success: boolean, session?: object, progression?: object, error?: string }>}
    */
-  saveSession: (session) => ipcRenderer.invoke('save-session', session),
+  saveSession: session => ipcRenderer.invoke('save-session', session),
+
+  /**
+   * Efface toute la progression (sessions, résultats, XP). Irréversible : l'interface demande confirmation.
+   * @returns {Promise<{ success: boolean, progression?: object, error?: string }>}
+   */
+  resetProgression: () => ipcRenderer.invoke('reset-progression'),
 })

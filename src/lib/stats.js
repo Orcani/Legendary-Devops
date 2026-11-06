@@ -8,21 +8,24 @@ export function statutDepuisTaux(tentatives, taux) {
   if (!tentatives) return 'non-commence'
   if (taux >= SEUIL_MAITRISE) return 'maitrise'
   if (taux >= SEUIL_POINT_FAIBLE) return 'en-progres'
-  return 'a-retravailler'
+  return 'en-acquisition'
 }
 
 export const LIBELLES_STATUT = {
   'non-commence': 'Pas encore travaillé',
-  'a-retravailler': 'À retravailler',
+  'en-acquisition': 'En cours d’acquisition',
   'en-progres': 'En bonne voie',
-  'maitrise': 'Maîtrisé',
+  maitrise: 'Maîtrisé',
 }
 
 function cumuler(questions, resultats) {
-  return questions.reduce((acc, q) => {
-    const r = resultats[q.id]
-    return { tentatives: acc.tentatives + (r?.tentatives || 0), reussites: acc.reussites + (r?.reussites || 0) }
-  }, { tentatives: 0, reussites: 0 })
+  return questions.reduce(
+    (acc, q) => {
+      const r = resultats[q.id]
+      return { tentatives: acc.tentatives + (r?.tentatives || 0), reussites: acc.reussites + (r?.reussites || 0) }
+    },
+    { tentatives: 0, reussites: 0 },
+  )
 }
 
 export function statsSousModule(sousModuleId, questions, resultats) {
@@ -56,23 +59,41 @@ export function pointsFaibles(modules, questions, resultats, statsSousModules = 
   const liste = []
   for (const mod of modules) {
     for (const sm of mod.sous_modules) {
-      const s = statsSousModule(sm.id, questions.filter(q => q.module_id === mod.id), resultats)
+      const s = statsSousModule(
+        sm.id,
+        questions.filter(q => q.module_id === mod.id),
+        resultats,
+      )
       if (!s.tentatives || s.taux >= SEUIL_POINT_FAIBLE) continue
-      liste.push({ module: mod, sousModule: sm, priorite: sm.priorite || mod.priorite, ...s,
-        dernierPassage: statsSousModules[sm.id]?.dernier_passage || null })
+      liste.push({
+        module: mod,
+        sousModule: sm,
+        priorite: sm.priorite || mod.priorite,
+        ...s,
+        dernierPassage: statsSousModules[sm.id]?.dernier_passage || null,
+      })
     }
   }
-  return liste.sort((a, b) => a.taux - b.taux ||
-    RANG_PRIORITE[a.priorite] - RANG_PRIORITE[b.priorite] ||
-    String(a.dernierPassage).localeCompare(String(b.dernierPassage)))
+  return liste.sort(
+    (a, b) =>
+      a.taux - b.taux ||
+      RANG_PRIORITE[a.priorite] - RANG_PRIORITE[b.priorite] ||
+      String(a.dernierPassage).localeCompare(String(b.dernierPassage)),
+  )
 }
 
 /** Chiffres de la vue d'ensemble du tableau de bord. */
 export function statsGlobales(modules, questions, resultats, sessions = []) {
-  let tentatives = 0, reussites = 0, repondues = 0
+  let tentatives = 0,
+    reussites = 0,
+    repondues = 0
   for (const q of questions) {
     const r = resultats[q.id]
-    if (r?.tentatives) { repondues++; tentatives += r.tentatives; reussites += r.reussites }
+    if (r?.tentatives) {
+      repondues++
+      tentatives += r.tentatives
+      reussites += r.reussites
+    }
   }
   const modulesAvecQuestions = modules.filter(m => questions.some(q => q.module_id === m.id))
   const modulesCommences = new Set(sessions.map(s => s.module_id))

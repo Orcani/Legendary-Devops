@@ -25,28 +25,42 @@ function configurerDossierDonnees() {
       fs.mkdirSync(dossier, { recursive: true })
       fs.copyFileSync(ancien, cible)
     }
-  } catch (e) { console.error('Migration de la progression impossible :', e.message) }
+  } catch (e) {
+    console.error('Migration de la progression impossible :', e.message)
+  }
 }
 configurerDossierDonnees()
 const store = new Store({ name: 'progression', defaults: normaliserProgression() })
 
 function readData() {
+  // Test Electron : jeu de données figé, indépendant du contenu réel.
   // Version packagée : resources/data/dataApp.json, hors de l'archive, donc modifiable avec un éditeur de texte.
-  const dataPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'data', 'dataApp.json')
-    : path.join(dirname, '../public/data/dataApp.json')
+  const dataPath =
+    process.env.DEVOPS_QUIZ_SMOKE === '1' && process.env.DEVOPS_QUIZ_DATA
+      ? process.env.DEVOPS_QUIZ_DATA
+      : app.isPackaged
+        ? path.join(process.resourcesPath, 'data', 'dataApp.json')
+        : path.join(dirname, '../public/data/dataApp.json')
   return JSON.parse(fs.readFileSync(dataPath, 'utf8').replace(/^\uFEFF/, ''))
 }
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 900, minHeight: 600,
+    width: 1280,
+    height: 800,
+    minWidth: 900,
+    minHeight: 600,
     title: 'Legendary DevOps',
     // Logo de la fenêtre et de la barre des tâches (l'exécutable packagé a déjà le sien via electron-builder).
     icon: path.join(dirname, process.env.VITE_DEV_SERVER_URL ? '../public/icon.png' : '../dist/icon.png'),
     show: process.env.DEVOPS_QUIZ_SMOKE !== '1',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#121633' : '#FAFAFD',
-    webPreferences: { preload: path.join(dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: {
+      preload: path.join(dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
   })
   // Liens externes (cours) : navigateur du système, jamais une fenêtre Electron.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -65,8 +79,11 @@ function createWindow() {
 }
 
 ipcMain.handle('load-data', () => {
-  try { return { success: true, data: readData() } }
-  catch (e) { return { success: false, error: e.message } }
+  try {
+    return { success: true, data: readData() }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 ipcMain.handle('get-progression', () => normaliserProgression(store.store))
 ipcMain.handle('save-session', (_, session) => {
@@ -75,10 +92,25 @@ ipcMain.handle('save-session', (_, session) => {
     // Une seule écriture du document entier, après validation et calcul.
     store.store = result.progression
     return { success: true, ...result }
-  } catch (e) { return { success: false, error: e.message } }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+// Repartir de zéro : la progression est remplacée par une progression vide (action confirmée dans l'interface).
+ipcMain.handle('reset-progression', () => {
+  try {
+    store.store = normaliserProgression()
+    return { success: true, progression: normaliserProgression(store.store) }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 app.whenReady().then(() => {
   createWindow()
-  app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow() })
+  app.on('activate', () => {
+    if (!BrowserWindow.getAllWindows().length) createWindow()
+  })
 })
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})

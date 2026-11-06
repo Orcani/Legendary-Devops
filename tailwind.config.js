@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -11,12 +8,30 @@ export default {
       // sont redéfinies : gris teintés d'indigo et gamme indigo. Le jaune « soleil » = la progression.
       colors: {
         slate: {
-          50: '#FAFAFD', 100: '#F1F2F9', 200: '#E2E5F2', 300: '#C9CDE3', 400: '#9CA2C4', 500: '#6B7299',
-          600: '#535A82', 700: '#3D4469', 800: '#2A3058', 900: '#1B2048', 950: '#121633',
+          50: '#FAFAFD',
+          100: '#F1F2F9',
+          200: '#E2E5F2',
+          300: '#C9CDE3',
+          400: '#9CA2C4',
+          500: '#6B7299',
+          600: '#535A82',
+          700: '#3D4469',
+          800: '#2A3058',
+          900: '#1B2048',
+          950: '#121633',
         },
         blue: {
-          50: '#EEF0FB', 100: '#DDE1F7', 200: '#C4CAF1', 300: '#A9B1EC', 400: '#8C96E8', 500: '#5B67CF',
-          600: '#2E3A87', 700: '#252F70', 800: '#1E2559', 900: '#171C45', 950: '#10132F',
+          50: '#EEF0FB',
+          100: '#DDE1F7',
+          200: '#C4CAF1',
+          300: '#A9B1EC',
+          400: '#8C96E8',
+          500: '#5B67CF',
+          600: '#2E3A87',
+          700: '#252F70',
+          800: '#1E2559',
+          900: '#171C45',
+          950: '#10132F',
         },
         encre: '#1E2559',
         lavande: '#8C96E8',
@@ -28,7 +43,7 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
-        'xl': '0.75rem',
+        xl: '0.75rem',
         '2xl': '1rem',
         '3xl': '1.5rem',
       },

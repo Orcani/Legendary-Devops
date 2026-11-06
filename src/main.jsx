@@ -6,4 +6,10 @@ import App from './App'
 import '@fontsource-variable/lexend'
 import '@fontsource/jetbrains-mono/400.css'
 import './index.css'
-ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><HashRouter><App/></HashRouter></React.StrictMode>)
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </React.StrictMode>,
+)

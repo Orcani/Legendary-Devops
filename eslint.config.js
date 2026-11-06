@@ -6,12 +6,20 @@ export default [
   { ignores: ['dist/**', 'dist-electron/**', 'node_modules/**', '.test-artifacts/**'] },
   {
     files: ['**/*.{js,jsx,cjs}'],
-    languageOptions: { ecmaVersion: 'latest', globals: { ...globals.browser, ...globals.node },
-      parserOptions: { ecmaFeatures: { jsx: true } } },
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
     settings: { react: { version: '18.3' } },
     plugins: { react, 'react-hooks': reactHooks },
-    rules: { ...js.configs.recommended.rules, ...react.configs.recommended.rules,
-      ...react.configs['jsx-runtime'].rules, ...reactHooks.configs.recommended.rules,
-      'react/prop-types': 'off', 'react/no-unescaped-entities': 'off' },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...react.configs.recommended.rules,
+      ...react.configs['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]

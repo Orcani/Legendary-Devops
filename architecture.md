@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Dernière mise à jour** | 2026-11-05 |
-| **État** | Phases 0 à 4 terminées côté code · reste à tester les installateurs sur Windows et macOS · prochaine étape : Phase 5 (contenu) |
+| **État** | Phases 0 à 5 terminées · 16 modules, 720 questions (16 par étape), 123 fiches Codex, page « Mon objectif » · installateur Windows testé (installation et démarrage) · reste : désinstallation et QCM dans la version installée |
 | **Version précédente** | `architecture.v1.md` (archive, ne plus utiliser) |
 
 ---
@@ -35,7 +35,9 @@ L'application doit convenir aux personnes autistes et/ou TDAH. Ces règles prime
 | **Chiffres sur demande** | Les statistiques sont sur une page dédiée ; l'écran des modules sert à explorer, sans chiffres envahissants (D-23) |
 | **Une action principale par écran** | Un seul bouton bleu plein par zone ; les actions secondaires sont en contour ; le thème est discret et séparé de la navigation (D-24) |
 | **Prévisibilité** | Mêmes en-têtes et onglets sur les trois écrans principaux ; boutons qui disent exactement ce qu'ils font ; aucune reprise ou navigation surprise |
-| **Erreurs bienveillantes** | Feedback neutre (« Oups, ce n'est pas ça. ») suivi d'une explication ; « À retravailler » plutôt que « échec » |
+| **Erreurs bienveillantes** | Feedback encourageant et varié (« Presque, regarde l'explication. ») suivi d'une explication ; « En cours d'acquisition » plutôt que « à retravailler » ou « échec » |
+| **Ton** | Tutoiement partout, phrases courtes et naturelles, pas de jargon sans explication (D-44) |
+| **Dopamine sans pression** | Petit mot de félicitation à chaque bonne réponse, confettis courts pour une session à 80 % et plus, un niveau gagné ou une leçon terminée ; rien si le système demande de réduire les animations (D-45) |
 | **Repères visuels** | Couleur et icône par module, lettres A–Z dans le Codex, parcours numérotés : se situer sans tout lire |
 | **Calme sensoriel** | Peu d'animations, aucune en boucle ; `prefers-reduced-motion` respecté ; contraste ≥ 4,5:1 ; thème jour/nuit |
 
@@ -116,6 +118,7 @@ Toutes les librairies d'interface sont en `devDependencies` : Vite les intègre 
 devops-quiz/
 ├── architecture.md            ← ce fichier
 ├── README.md                  ← lancement, parcours, vérifications, distribution
+├── .prettierrc.json           ← mise en forme (npm run format) ; .prettierignore, .editorconfig
 ├── index.html                 ← <title>Legendary DevOps</title>, lang="fr" (CSP ajoutée au build)
 ├── vite.config.js             ← plugins React, Electron et CSP de production
 ├── build/icon.png             ← icône 1024 × 1024 (convertie en .ico / .icns par electron-builder)
@@ -134,7 +137,8 @@ devops-quiz/
 │   ├── validate-data.mjs      ← vérification de dataApp.json (lancée par npm run build)
 │   ├── progression.test.js    ← tests unitaires (node --test)
 │   ├── electron-smoke.cjs     ← parcours réel Electron + navigateur
-│   └── run-electron-smoke.cjs
+│   ├── run-electron-smoke.cjs
+│   └── fixtures/dataApp.test.json ← jeu de données figé du test Electron (indépendant du contenu réel)
 └── src/
     ├── main.jsx               ← HashRouter, polices, StrictMode
     ├── App.jsx                ← chargement données/progression, thème, routes
@@ -142,21 +146,29 @@ devops-quiz/
     ├── store/statsStore.js    ← store Zustand (contenu, progression, thème)
     ├── hooks/useQuiz.js       ← machine à états d'une session (brouillon, sauvegarde)
     ├── lib/
-    │   ├── quizSelection.js   ← filtrage du pool, tirage aléatoire
+    │   ├── selection.js       ← filtrage du pool, tirage aléatoire
+    │   ├── difficulte.js      ← palier de difficulté d'un module, tirage pondéré (D-40)
     │   ├── priorites.js       ← classes CSS des badges P1/P2/P3
     │   ├── stats.js           ← statuts, taux, points faibles, vue d'ensemble
     │   ├── format.js          ← pluriels, durées, libellés, recherche sans accents, contraste
-    │   └── brouillons.js      ← purge des brouillons de session
+    │   ├── brouillons.js      ← purge des brouillons, brouillons en cours, lien de reprise
+    │   └── parcours.js        ← étapes ordonnées, prochaine étape conseillée
     ├── views/
-    │   ├── AccueilView.jsx    ← /              (progression, points à revoir, sessions)
+    │   ├── JourneyView.jsx    ← /              (Mon parcours : prochaine étape, progression, sessions)
+    │   ├── WelcomeView.jsx    ← /bienvenue     (« Par où commencer ? », premier lancement)
     │   ├── ModulesView.jsx    ← /modules       (modules par priorité)
     │   ├── CodexView.jsx      ← /codex
+    │   ├── ObjectiveView.jsx  ← /objectif
     │   ├── ModuleView.jsx     ← /module/:moduleId
+    │   ├── LearnView.jsx      ← /module/:moduleId/comprendre/:sousModuleId
     │   └── QuizView.jsx       ← /quiz/:moduleId
     ├── components/shared/
-    │   ├── AppHeader.jsx      ← marque, onglets Accueil / Modules / Codex, titre
+    │   ├── AppHeader.jsx      ← marque, onglets Mon parcours / Modules / Codex, titre
     │   ├── ThemeToggle.jsx    ← bouton jour/nuit (variante discrète, icône seule)
-    │   └── ModuleIcon.jsx     ← tuile icône + couleur du module
+    │   ├── ModuleIcon.jsx     ← tuile icône + couleur du module
+    │   └── PriorityBadge.jsx  ← badge P1/P2/P3 avec info-bulle ou légende
+    ├── components/journey/
+    │   └── NextStepCard.jsx   ← « Prochaine étape conseillée » (seule action principale de Mon parcours)
     ├── components/dashboard/
     │   └── ModuleCard.jsx
     ├── components/stats/
@@ -220,7 +232,7 @@ devops-quiz/
 ### 6.1 Racine de `dataApp.json`
 
 ```json
-{ "modules": [ ... ], "questions": [ ... ], "lexique": [ ... ] }
+{ "modules": [ ... ], "questions": [ ... ], "lexique": [ ... ], "objectifs": { "socle": [ ... ], "postes": [ ... ] } }
 ```
 
 ### 6.2 Objet `Module`
@@ -257,6 +269,29 @@ devops-quiz/
 | `concepts_cles` | string[] | ✅ | Étiquettes de ModuleView |
 | `sous_modules[].resume` | string (2-3 phrases) | ✅ | Carte de l'étape dans le parcours |
 | `sous_modules[].priorite` | P1/P2/P3 | ⬜ | Hérite du module si absent ; badge affiché seulement si les priorités sont mélangées |
+| `sous_modules[].comprendre` | objet | ⬜ (conseillé) | Étape « Comprendre » (`LearnView`), voir ci-dessous. `validate-data` signale un sous-module qui a des questions sans `comprendre` |
+
+**Étape « Comprendre » (`sous_modules[].comprendre`)** — une page courte à lire avant le QCM (D-34) :
+
+```json
+"comprendre": {
+  "objectifs": ["Lire un chemin absolu ou relatif", "…"],
+  "notions": [
+    { "titre": "Tout part de /", "texte": "2 à 4 phrases simples…", "codex": "fhs" }
+  ],
+  "schema": { "titre": "Du plus large au plus précis", "etapes": ["/", "/home", "/home/alice"] },
+  "exemple": { "legende": "Se repérer dans un terminal", "code": "pwd\ncd /etc\nls -l" },
+  "a_retenir": "Une phrase ou deux, l'essentiel à garder en tête."
+}
+```
+
+| Champ | Oblig. | Règle |
+|---|---|---|
+| `objectifs` | ✅ | 2 à 4 phrases « vous saurez… » |
+| `notions[]` | ✅ | `titre` + `texte` ; `codex` optionnel, doit exister dans `lexique` (bouton vers la fiche) |
+| `schema` | ⬜ | `etapes` : au moins 2 éléments, affichés reliés par des flèches jaunes |
+| `exemple` | ✅ | `code` copiable ; `legende` courte |
+| `a_retenir` | ✅ | encadré jaune clair en fin de page |
 
 Icônes disponibles dans `ModuleIcon.jsx` : `activity`, `book-open`, `boxes`, `cloud`, `code`, `container`, `file-code`, `gauge`, `git-branch`, `layers`, `network`, `server`, `shield-check`, `terminal`, `workflow`, `wrench`.
 
@@ -305,6 +340,8 @@ Icônes disponibles dans `ModuleIcon.jsx` : `activity`, `book-open`, `boxes`, `c
   "terme": "Conteneur",
   "categorie": "Conteneurs",
   "module_id": "conteneurs-fondamentaux",
+  "en_bref": "Un conteneur, c'est ton application qui tourne dans sa propre bulle…",
+  "analogie": "Comme un food truck : la cuisine complète voyage avec le camion…",
   "definition": "Instance en cours d'exécution d'une image…",
   "role_cicd": "Chaque étape d'un pipeline peut s'exécuter dans un conteneur éphémère…",
   "exemple": "docker run -d -p 8080:80 nginx",
@@ -312,7 +349,19 @@ Icônes disponibles dans `ModuleIcon.jsx` : `activity`, `book-open`, `boxes`, `c
 }
 ```
 
-`exemple` et `voir_aussi` sont optionnels ; les autres champs sont obligatoires.
+`analogie`, `exemple` et `voir_aussi` sont optionnels. `en_bref` (une phrase en langage courant, au tutoiement) est attendu : sans lui, `validate-data` avertit et la fiche affiche la définition à la place. La fiche se lit dans cet ordre : en bref, image du quotidien (« Pour te le représenter »), « Plus précisément » (`definition`), « À quoi ça sert en DevOps » (`role_cicd`), exemple, « Ça va avec » (D-46).
+
+### 6.4 bis Objet `objectifs` (page « Mon objectif », facultatif)
+
+| Champ | Type | Description |
+|---|---|---|
+| `socle` | string[] | Ids d'étapes que toutes les offres supposent acquises (jauge « Tes bases ») |
+| `postes[].id` | string | kebab-case, unique |
+| `postes[].intitule` / `resume` | string | Nom du poste et ce que demandent les offres, en une ou deux phrases |
+| `postes[].indispensable` | string[] | Étapes demandées par presque toutes les offres (comptent pour la barre) |
+| `postes[].apprecie` | string[] | Étapes citées comme un plus (affichées après les indispensables) |
+
+Le référentiel est rédigé dans `contenu/p5/postes.py` ; `build.py` et `validate-data` vérifient que chaque étape existe.
 
 ### 6.5 Progression (`progression.json`)
 
@@ -341,20 +390,25 @@ Trois écrans principaux reliés par des onglets (`AppHeader`), plus deux écran
 
 | Route | Vue | Rôle |
 |---|---|---|
-| `/` | `AccueilView` | Onglet **Accueil** : niveau, vue d'ensemble, points à revoir, progression par module, dernières sessions |
+| `/` | `JourneyView` | Onglet **Mon parcours** : prochaine étape conseillée, niveau, vue d'ensemble, points à revoir, progression par module, dernières sessions. Premier lancement (aucune session, rien lu, introduction jamais vue) → `/bienvenue` |
+| `/bienvenue` | `WelcomeView` | « Par où commencer ? » : la méthode en trois temps et trois choix de départ |
 | `/modules` | `ModulesView` | Onglet **Modules** : modules regroupés par priorité |
 | `/statistiques` | — | Redirige vers `/` (ancien nom de l'accueil) |
 | `/codex?terme=<id>` | `CodexView` | Onglet **Codex** : cartes groupées par lettre ; `terme` ouvre la fiche en modale |
 | `/module/:moduleId` | `ModuleView` | Présentation du module, parcours des sous-modules, lancement d'une révision |
-| `/quiz/:moduleId?mode=short\|long&scope=all\|seen&submodule=<id>` | `QuizView` | Reprise éventuelle, session de QCM puis bilan |
+| `/module/:moduleId/comprendre/:sousModuleId` | `LearnView` | Étape « Comprendre » d'un sous-module, puis passage au QCM de l'étape |
+| `/quiz/:moduleId?mode=short\|long&scope=all\|seen&submodule=<id>&reprendre=1` | `QuizView` | Reprise éventuelle, session de QCM puis bilan. `reprendre=1` reprend le brouillon sans poser la question |
+| `/objectif` | `ObjectiveView` | Onglet **Mon objectif** : poste visé, jauge « Tes bases », barre « Quand postuler ? » et étapes à travailler (D-52) |
 | `/lexique` | — | Redirige vers `/codex` (ancien nom) |
 | `*` | — | Redirige vers `/` |
 
 ```
-[Accueil] [Modules] [Codex]                 ← onglets
-    │            │ « Réviser »
-    ▼            ▼
-  Module ──QCM──▶ Quiz ──fin──▶ Bilan ──▶ Module / Rejouer
+[Mon parcours] [Modules] [Codex]            ← onglets
+    │ « Prochaine étape »   │
+    ▼                       ▼
+ Comprendre ──S'entraîner──▶ Quiz ──fin──▶ Bilan ──▶ Module / Rejouer
+    ▲                       ▲
+    └──── Module ───────────┘
                    │
                    └── fiche Codex (modale)
 ```
@@ -467,16 +521,18 @@ Parcours du module (3/5 de largeur)       │ Réviser tout le module (2/5, coll
 ```
 
 - **Parcours** : étapes numérotées, triées par priorité puis dans l'ordre du cours. La pastille prend la couleur du statut : gris (pas encore travaillé), ambre (à retravailler, < 70 %), bleu (en bonne voie, 70–79 %), vert avec coche (maîtrisé, ≥ 80 %). Taux calculés depuis `resultats_par_question` (`lib/stats.js`).
-- Chaque étape : titre, résumé, barre de réussite, nombre de questions, bouton « Réviser cette étape » (ou « Questions à venir »).
+- Chaque étape : titre, résumé, barre de réussite, nombre de questions, bouton secondaire « Comprendre » (« Relire » une fois lu, s'il existe un contenu `comprendre`) et bouton « S'entraîner » (ou « Questions à venir »). Sous-titre : « Pour chaque étape : comprendre les notions, puis s'entraîner avec un QCM. »
+- Badge de priorité avec sa signification écrite à côté (`PriorityBadge withLabel`) ; ailleurs, info-bulle au survol et texte lu par les lecteurs d'écran.
 - Les tuiles s'appellent « Révision rapide » et « Toutes les questions » (anciennement « Examen complet », qui évoquait une épreuve).
 - **Réviser tout le module** : sélecteur à deux positions « Tout le module / Déjà travaillés » (le second est désactivé tant qu'aucune session n'est terminée), puis des tuiles qui disent exactement ce qui va se passer et combien de temps ça prend (environ 30 s par question). La révision rapide (10 questions au hasard) n'apparaît que si la sélection dépasse 10 questions.
+- Le panneau de révision indique le **niveau des questions** (Débutant, Intermédiaire, Avancé) avec la mention « S'adapte à votre niveau général et à vos révisions de ce module » (D-40).
 - Mise en page sur une colonne sous 1024 px (panneau de révision avant le parcours).
 
 ### 8.4 ModulesView (onglet Modules)
 
 ```
 Legendary DevOps                                                   (☾)
-[⌂ Accueil] [▦ Modules] [📖 Codex]
+[⌂ Mon parcours] [▦ Modules] [📖 Codex]
 Modules
 Classés par priorité de candidature. Choisissez un module pour voir son parcours.
  P1 À maîtriser avant toute candidature   [carte] [carte] [carte]
@@ -484,24 +540,44 @@ Classés par priorité de candidature. Choisissez un module pour voir son parcou
  P3 Culture technique                      [carte] …
 ```
 
-- Écran d'**exploration** uniquement : pas de niveau, d'XP ni de chiffres globaux (ils sont sur l'accueil, D-23, D-31).
+- Écran d'**exploration** uniquement : pas de niveau, d'XP ni de chiffres globaux (ils sont sur Mon parcours, D-23, D-31, D-35).
 - **Modules regroupés par priorité** (P1, P2, P3) avec la phrase d'explication de chaque priorité.
 - **Carte module** : liseré et tuile aux couleurs du module, badge, description, nombre de questions, taux de réussite (ou « Pas encore commencé »), étapes travaillées. Un module sans question a une bordure en pointillés, sans liseré, avec « Questions à venir ».
 
-### 8.5 AccueilView (onglet Accueil, page d'ouverture)
+### 8.5 JourneyView (onglet Mon parcours, page d'ouverture)
+
+- **Prochaine étape conseillée** (`NextStepCard`, barre jaune à gauche) : **un seul bouton principal** sur l'écran (D-36). Calculée par `prochaineEtape` (`lib/parcours.js`), dans cet ordre : reprendre une session en cours (brouillon) → retravailler le point le plus faible (< 70 %) → lire « Comprendre » de la première étape non commencée, ou s'entraîner dessus si elle est déjà lue → consolider une étape sous 80 % → tout est maîtrisé (lien vers Modules). Étapes parcourues par priorité, puis dans l'ordre du fichier.
+- Les autres actions de l'écran (« S'entraîner » des points à revoir…) sont des boutons secondaires.
+- En bas : lien « Relire « Par où commencer ? » » et bouton discret « Repartir de zéro » (fenêtre de confirmation, bouton « Non, je garde tout » sélectionné par défaut). Il efface progression, leçons lues, introduction et sessions en cours ; le thème est gardé (D-47).
 
 - **Carte niveau** : titre + emoji, niveau, XP total, prochain titre à débloquer, barre vers le niveau suivant.
 - **Vue d'ensemble** : questions répondues au moins une fois / total, taux de réussite global, sessions terminées, modules commencés / modules disponibles. **Aucune série de jours** (D-22).
-- **À retravailler** : sous-modules travaillés sous 70 %, triés par taux croissant, puis priorité, puis révision la plus ancienne ; 5 affichés au maximum ; bouton « Réviser ». Sans résultat : invitation à commencer par un module P1. Sans point faible : « Rien à retravailler pour l'instant ».
-- **Progression par module** : une ligne par module (icône, badge, étapes travaillées, réussite), cliquable vers la page du module ; les modules sans question sont cités à la fin.
-- **Dernières sessions** : les 10 plus récentes (date, module, score, XP).
+- **En cours d'acquisition** : étapes travaillées sous 70 %, triées par taux croissant, puis priorité, puis révision la plus ancienne ; 5 affichées au maximum ; bouton « Retenter ». Sans résultat : invitation à commencer par un module P1. Sans point faible : un mot de félicitation.
+- **Progression par module** : les modules commencés d'abord, puis les autres par priorité ; **3 lignes visibles**, le reste derrière « Voir les N autres modules » (D-48).
+- **Dernières sessions** : les 5 plus récentes (date, module, score, XP).
 - Calculs dans `lib/stats.js` (`statsGlobales`, `pointsFaibles`, `statsModule`), couverts par `npm test`.
+
+### 8.5 bis WelcomeView (« Par où commencer ? »)
+
+- Affiché au premier lancement ; ensuite accessible depuis Mon parcours. Logo, bouton de thème discret.
+- La méthode en trois temps : **Comprendre** (lire l'étape), **S'entraîner** (QCM), **Revoir** (ce qui reste fragile).
+- Trois tuiles : « Commencer par les bases (P1) » (même destination que la prochaine étape conseillée), « Choisir un sujet » (Modules), « Parcourir le Codex ». Chaque choix mémorise que l'introduction a été vue (`devops-quiz-intro-vue`).
+
+### 8.5 ter LearnView (étape « Comprendre »)
+
+- Barre de lecture jaune en haut, qui avance avec le défilement. Ouvrir la page marque l'étape comme lue (`devops-quiz-comprendre-vus`, D-34).
+- En-tête « Leçon · étape n sur N » avec le bandeau couleur du module, le résumé et trois pastilles : durée de lecture estimée, nombre d'idées clés, nombre de questions.
+- « Dans cette leçon, tu vas apprendre à » : objectifs en cartes (deux colonnes).
+- « Les idées clés » : frise verticale, une pastille jaune numérotée par idée, chaque idée dans sa carte, avec un bouton-pastille vers la fiche Codex (une même fiche une seule fois par page).
+- Schéma dans un encadré brume, cases numérotées reliées par des flèches ; « En pratique » : exemple présenté comme une fenêtre de terminal avec bouton Copier ; « Si tu ne retiens qu'une chose » en grand dans l'encadré jaune.
+- Fin de leçon : « Leçon terminée, bravo ! » avec quelques confettis quand on arrive en bas, puis le bouton principal « Me tester sur cette étape (N questions) » et la navigation vers l'étape précédente et la suivante (D-49).
+- Changer d'étape ouvre une page neuve affichée depuis le haut (la vue a une clé par adresse dans `App.jsx`).
 
 ### 8.6 Codex
 
 ```
 Legendary DevOps                                                   (☾)
-[⌂ Accueil] [▦ Modules] [📖 Codex]
+[⌂ Mon parcours] [▦ Modules] [📖 Codex]
 Codex
 [🔍 Rechercher un terme ou une notion   ✕]  (Toutes 6) (Conteneurs 4) (Linux 2)
  A B C D E F G H I J … Z                      ← index collé en haut
@@ -567,50 +643,28 @@ L'XP n'est attribué qu'à la **fin** de la session (pas pendant).
 
 ## 10. Catalogue des modules
 
-🔴 P1 : à maîtriser avant toute candidature · 🟠 P2 : compréhension introductive · 🟡 P3 : culture technique
+Le catalogue initial (40 entrées du cours de Stéphane Robert) est regroupé en **16 modules**, dont les entrées deviennent des sous-modules (D-42). Chaque sous-module a son étape « Comprendre ».
 
-| ID | Label | Prio | Dans `dataApp.json` |
-|---|---|---|---|
-| `linux-fondamentaux` | Linux — Fondamentaux DevSecOps | 🔴 | ✅ (2 questions) |
-| `linux-parcours` | Linux — Parcours B0 à B6 | 🔴 | |
-| `git` | Git | 🔴 | ✅ (0 question) |
-| `culture-devops` | Culture DevOps | 🟠 | |
-| `conteneurs-fondamentaux` | Conteneurs — Fondamentaux | 🔴 | ✅ (1 question) |
-| `conteneurs-complement` | Conteneurs — Compléments | 🔴 | |
-| `scripting` | Scripting (Bash & Python) | 🔴 | |
-| `reseau-base` | Réseau de base | 🔴 | |
-| `reseau-parcours` | Réseau — Parcours 02 à 07 | 🔴 | |
-| `cloud-base` | Cloud de base | 🔴 | |
-| `cloud-azure` | Cloud — Complément Azure | 🟠 | |
-| `cicd-fondamentaux` | CI/CD — Fondamentaux | 🔴 | |
-| `gitlab-volet1` | GitLab CI — Volet 1 (modules 1–14) | 🔴 | |
-| `gitlab-volet2` | GitLab CI — Volet 2 Industrialisation | 🟠 | |
-| `gitlab-volet3` | GitLab CI — Volet 3 Sécurité | 🟡 | |
-| `iac-fondamentaux` | IaC — Fondamentaux | 🔴 | |
-| `terraform-decouvrir` | Terraform — Découvrir | 🔴 | |
-| `terraform-ecrire` | Terraform — Écrire du code | 🔴 | |
-| `terraform-infra` | Terraform — Premières infrastructures | 🟠 | |
-| `terraform-state` | Terraform — State | 🟠 | |
-| `terraform-modules` | Terraform — Modules | 🟡 | |
-| `ansible-demarrer` | Ansible — Comprendre et démarrer | 🟠 | |
-| `ansible-ecrire` | Ansible — Écrire du code | 🟠 | |
-| `kubernetes-fondamentaux` | Kubernetes — Fondamentaux | 🔴 | |
-| `kubernetes-reseau` | Kubernetes — Réseau et exposition | 🟠 | |
-| `kubernetes-exploitation` | Kubernetes — Exploitation et diagnostic | 🔴 | |
-| `kubernetes-k3s` | Kubernetes — K3s et K3d | 🟠 | |
-| `gitops-argocd` | GitOps — ArgoCD | 🟠 | |
-| `observabilite-02` | Observabilité — Comprendre et préparer | 🟠 | |
-| `observabilite-03` | Observabilité — Métriques (Prometheus) | 🔴 | |
-| `observabilite-04` | Observabilité — Grafana et alerting | 🔴 | |
-| `observabilite-05` | Observabilité — Journaux (Loki) | 🟠 | |
-| `observabilite-06` | Observabilité — OpenTelemetry | 🟡 | |
-| `observabilite-07` | Observabilité — Fondamentaux approfondis | 🟠 | |
-| `observabilite-08` | Observabilité — Pratiques d'exploitation | 🟡 | |
-| `sre` | SRE — Fondamentaux | 🟠 | |
-| `platform-engineering` | Platform Engineering | 🟠 | |
-| `architecture-exploitation` | Architecture et exploitation | 🟠 | |
-| `securite-socle` | Sécurité — Socle opérationnel | 🟠 | |
-| `depannage` | Dépannage transversal | 🔴 | |
+| ID | Label | Prio | Sous-modules (questions) | Total |
+|---|---|---|---|---|
+| `linux-fondamentaux` | Linux — Fondamentaux DevSecOps | P1 | Arborescence & FHS (16) · Droits et permissions (16) · Services systemd & logs (16) | 48 |
+| `linux-parcours` | Linux — Ligne de commande et administration | P1 | Fichiers, texte et pipes (16) · Utilisateurs, groupes et paquets (16) · SSH et accès distant (16) | 48 |
+| `git` | Git — Versioning & Collaboration | P1 | Workflow & staging (16) · Branches, merge & rebase (16) · Dépôt distant & merge request (16) | 48 |
+| `conteneurs-fondamentaux` | Conteneurs — Docker Fondamentaux | P1 | Commandes fondamentales (16) · Écrire un Dockerfile (16) · Volumes, réseaux & Compose (16) | 48 |
+| `conteneurs-complement` | Conteneurs — Registres et sécurité | P1 | Registres, étiquettes & multi-stage (16) · Sécurité des images (16) | 32 |
+| `scripting` | Scripting — Bash et Python | P1 | Scripts Bash (16) · Python pour l'automatisation (16) | 32 |
+| `reseau` | Réseau — Les bases pour le DevOps | P1 | Adresses IP, sous-réseaux et ports (16) · DNS, HTTP et TLS (16) · Diagnostiquer un problème réseau (16) | 48 |
+| `cloud` | Cloud — Notions et Azure | P1 | Les notions du cloud (16) · Organiser ses ressources dans Azure (16) | 32 |
+| `cicd` | CI/CD — Fondamentaux et GitLab CI | P1 | Principes de la CI/CD (16) · Écrire un pipeline GitLab CI (16) · Variables, artefacts, cache et règles (16) | 48 |
+| `iac-terraform` | Infrastructure as Code — Terraform | P1 | Les principes de l'IaC (16) · Terraform : init, plan, apply (16) · Écrire du HCL : ressources, variables, outputs (16) · State et modules (16) | 64 |
+| `kubernetes` | Kubernetes — Orchestration et GitOps | P1 | Les objets de base (16) · Réseau et exposition (16) · Exploiter et diagnostiquer (16) · Déployer avec Helm et GitOps (16) | 64 |
+| `culture-devops` | Culture DevOps | P2 | Les principes DevOps (16) · Mesurer et apprendre (16) | 32 |
+| `gitlab-avance` | GitLab CI — Industrialisation et sécurité | P2 | Industrialiser ses pipelines (16) · Sécurité dans le pipeline (16) | 32 |
+| `ansible` | Ansible — Gestion de configuration | P2 | Comprendre et démarrer (16) · Playbooks et rôles (16) | 32 |
+| `observabilite` | Observabilité — Métriques, logs et traces | P2 | Les fondamentaux de l'observabilité (16) · Métriques avec Prometheus (16) · Tableaux de bord et alertes (16) · Logs avec Loki et traces avec OpenTelemetry (16) | 64 |
+| `sre-plateforme` | SRE, Platform Engineering et dépannage | P2 | SRE : objectifs de fiabilité (16) · Platform Engineering (16) · Dépannage et gestion d'incident (16) | 48 |
+
+**Total : 720 questions** (244 débutant, 296 intermédiaire, 180 avancé), soit 16 par étape, et **123 fiches Codex**. Les 372 questions ajoutées le 6 novembre (D-51) sont surtout des mises en situation.
 
 Liens de cours : voir `lien_cours` de chaque module dans `dataApp.json` (base : https://www.stephane-robert.info/docs/).
 
@@ -647,7 +701,7 @@ Liens de cours : voir `lien_cours` de chaque module dans `dataApp.json` (base : 
 - [x] Reprise explicite d'un brouillon ; purge des brouillons de plus de 30 jours ou orphelins
 - [x] Bilan : revoir mes erreurs, rejouer mes erreurs, durée lisible, sidebar masquée
 - [x] Animation de passage de niveau
-- [x] **Page Module refaite** : résumé du module (`resume`), notions clés, chiffres clés, lien vers le cours, parcours des sous-modules avec résumé et statut, tuiles « Révision rapide » / « Examen complet » avec durée estimée
+- [x] **Page Module refaite** : résumé du module (`resume`), notions clés, chiffres clés, lien vers le cours, parcours des sous-modules avec résumé et statut, tuiles « Révision rapide » / « Toutes les questions » (anciennement « Examen complet ») avec durée estimée
 - [x] Dashboard : tuile et couleur de chaque module, barre des étapes travaillées
 - [x] Liens externes ouverts dans le navigateur du système (`setWindowOpenHandler`)
 
@@ -683,29 +737,19 @@ Liens de cours : voir `lien_cours` de chaque module dans `dataApp.json` (base : 
 - [ ] **Tester les installateurs** : `npm run dist:win` sur Windows, `npm run dist:mac` sur un Mac (installation, lancement, progression conservée, `dataApp.json` modifiable dans le dossier `resources/data`)
 - [ ] *(Plus tard)* Signature de code Windows / macOS : sans signature, Windows SmartScreen et macOS Gatekeeper affichent un avertissement au premier lancement
 
-### 🚀 Phase 5 — Contenu
+### ✅ Phase 5 — Contenu (terminée le 2026-11-05)
 
-| Lot | Objectif | Actuel |
-|---|---|---|
-| Linux — Fondamentaux | 30 | 2 |
-| Linux — Parcours B0-B6 | 20 | 0 |
-| Git | 20 | 0 |
-| Culture DevOps | 15 | 0 |
-| Conteneurs — Fondamentaux | 30 | 1 |
-| Conteneurs — Compléments | 15 | 0 |
-| Scripting Bash/Python | 20 | 0 |
-| Réseau | 25 | 0 |
-| Cloud / Azure | 20 | 0 |
-| CI/CD + GitLab CI Volet 1 | 30 | 0 |
-| GitLab CI Volets 2 et 3 | 15 | 0 |
-| IaC + Terraform | 30 | 0 |
-| Ansible | 15 | 0 |
-| Kubernetes | 25 | 0 |
-| Observabilité | 20 | 0 |
-| SRE / Platform / Dépannage | 15 | 0 |
-| **Fiches Codex** | **80** | **6** |
+- [x] 16 modules, 45 sous-modules, chacun avec son étape « Comprendre » (objectifs, notions, schéma, exemple, à retenir)
+- [x] 348 questions (objectif 345), environ 40 % débutant, 40 % intermédiaire, 20 % avancé par module
+- [x] 123 fiches Codex (objectif 80), toutes reliées aux questions et aux notions
+- [x] Choix rééquilibrés : la bonne réponse n'est la plus longue que dans environ un tiers des questions (D-43)
+- [x] `validate-data` sans erreur ni avertissement
 
-Chaque nouveau module et sous-module arrive avec son `resume` de 2-3 phrases : à quoi il sert, ce que l'on saura faire après.
+Règles pour tout nouveau contenu : un `resume` de 2-3 phrases par module et sous-module, une étape `comprendre` par sous-module (D-34), la répartition des difficultés ci-dessus, des distracteurs plausibles et de longueur comparable à la bonne réponse, et des affirmations techniques vérifiées.
+
+- [x] Banque élargie à 16 questions par étape (720 au total), `validate-data` refuse une étape de moins de 10 questions (D-51)
+
+Pistes ensuite : viser une vingtaine de questions par étape pour plus de variété d'une session à l'autre.
 
 ---
 
@@ -722,10 +766,26 @@ Chaque nouveau module et sous-module arrive avec son `resume` de 2-3 phrases : �
 | Animations | Framer Motion |
 | Electron | Communication uniquement par IPC nommé via `window.electronAPI` ; aucun accès Node dans le renderer |
 | Logique métier | Calculs de progression dans `shared/` (testables sans React ni Electron) |
-| Langue | Interface en français ; noms métier en français (`enregistrerSession`, `priorite`) |
-| Avant de livrer | `npm test` · `npm run lint` · `npm run build` (inclut `validate-data`) · `npm run test:electron` |
+| Langue des noms (D-38) | **Anglais** : composants, fichiers de vues et de composants, hooks, props React, gestionnaires (`JourneyView`, `PriorityBadge`, `onSelect`, `markUnderstood`). **Français** : données (`dataApp.json`, `progression.json`), logique métier (`shared/`, `src/lib/`), clés de données du store, clés `localStorage`, textes de l'interface (`prochaineEtape`, `comprendre_vus`, `priorite`). Pas de nom mélangé (`getTitre` → `titrePourNiveau`) |
+| Mise en forme | Prettier (`npm run format`, vérification `npm run format:check`) : sans point-virgule, guillemets simples, 120 colonnes, virgules finales. `dataApp.json` et les `.md` ne sont pas reformatés |
+| Tests de l'interface | `data-testid` en kebab-case anglais (`next-step`, `learn-practice`, `reviser-<sous-module>`) ; le test Electron utilise `scripts/fixtures/dataApp.test.json`, jamais le contenu réel |
+| Avant de livrer | `npm run format` · `npm test` · `npm run lint` · `npm run build` (inclut `validate-data`) · `npm run test:electron` |
 | Contenu | Après chaque modification de `dataApp.json` : `npm run validate-data` |
 | Documentation | Toute décision structurante → ce fichier, section 13 |
+
+---
+
+### Difficulté adaptative (D-40)
+
+Chaque module a un **palier** calculé dans `lib/difficulte.js` à partir du niveau général et du travail fait sur ce module :
+
+| Palier | Condition (la première vraie l'emporte) |
+|---|---|
+| Avancé | au moins 4 sessions terminées sur le module **et** ≥ 80 % de réussite ; ou niveau ≥ 15, au moins 1 session et ≥ 70 % |
+| Intermédiaire | au moins 2 sessions et ≥ 60 % ; ou niveau ≥ 6 (sans résultat sur le module, ou ≥ 50 %) |
+| Débutant | sinon |
+
+Le palier règle les **poids du tirage** (débutant / intermédiaire / avancé) : Débutant 6 / 3 / 1, Intermédiaire 2 / 5 / 3, Avancé 1 / 3 / 6. Aucune question n'est exclue : s'il manque des questions d'un niveau, les autres complètent. La session est ensuite triée de la plus facile à la plus difficile (démarrage en douceur), au hasard à l'intérieur d'une même difficulté. Le palier est figé au début de la session et affiché sur la page du module. Tests : `npm test`.
 
 ---
 
@@ -764,5 +824,25 @@ Chaque nouveau module et sous-module arrive avec son `resume` de 2-3 phrases : �
 | D-31 | 2026-11-05 | La page de progression devient l'**accueil** (`/`) ; onglets Accueil / Modules / Codex ; Modules passe en `/modules` | Elle réunit progression, points à revoir et sessions : c'est le bon point de départ à chaque ouverture |
 | D-32 | 2026-11-05 | **Identité « Parcours + soleil »** : piste B (indigo, lavande, Lexend, icône « notions reliées ») avec le jaune de la piste C à la place du vert ; le jaune signifie la progression ; priorités sans rouge ; thème par défaut = système | Choix de la propriétaire du projet après comparaison de trois pistes (audit du 5 novembre). Remplace l'apparence « outil de développeur » (gris/bleu Tailwind, mode nuit par défaut, icône infini) |
 | D-33 | 2026-11-05 | Le dépôt Git est le dossier du projet côté **Windows**, piloté avec le Git de **WSL** via `/mnt/c/…` (`core.fileMode false`) ; npm et Electron restent côté Windows | Un seul dossier pour coder et versionner ; la clé SSH GitHub est configurée dans WSL, pas sous Windows. Usage personnel : la propriétaire est la principale testeuse |
+| D-34 | 2026-11-05 | Étape **« Comprendre »** par sous-module (`comprendre` dans `dataApp.json`, page `LearnView`) : proposée en premier, jamais obligatoire ; l'étape lue est mémorisée localement | Apprendre avant d'être testée ; un QCM sans explication préalable met en échec. Pas de blocage : on peut aller directement au QCM |
+| D-35 | 2026-11-05 | L'onglet Accueil devient **« Mon parcours »** (`JourneyView`) | « Accueil » ne disait rien du contenu ; « Statistiques » écarté (la page sert surtout à savoir quoi faire ensuite) |
+| D-36 | 2026-11-05 | **Un seul bouton principal** sur Mon parcours : « Prochaine étape conseillée », calculée par `prochaineEtape` (reprendre → retravailler → comprendre/s'entraîner → consolider) | Éviter le choix à faire à chaque ouverture ; une seule action évidente (AuDHD) |
+| D-37 | 2026-11-05 | Écran **« Par où commencer ? »** (`/bienvenue`) au premier lancement, puis accessible depuis Mon parcours | Expliquer la méthode Comprendre → S'entraîner → Revoir avant de montrer des chiffres vides |
+| D-38 | 2026-11-05 | **Convention de nommage** : anglais pour le code d'interface React, français pour les données et la logique métier ; **Prettier** ajouté | Cohérence du code : les deux langues étaient mélangées au hasard (`AccueilView`, `getTitre`, `onReviser`) |
+| D-39 | 2026-11-05 | Badges de priorité : composant `PriorityBadge` avec info-bulle (ou légende écrite sur la page Module) ; vocabulaire unique « Toutes les questions » | La signification de P1/P2/P3 n'était écrite que sur l'onglet Modules ; « Examen complet » subsistait à côté de « Toutes les questions » |
+| D-40 | 2026-11-05 | **Difficulté adaptative** : palier par module (niveau général + sessions + réussite sur le module), tirage pondéré, session triée du plus facile au plus difficile | Demande de la propriétaire : les questions doivent évoluer de débutant à avancé avec le niveau et les révisions. Pondérer plutôt qu'exclure évite les sessions vides tant que le contenu avancé est mince |
+| D-41 | 2026-11-05 | Info-bulle des badges lisible (texte 14 px, fond encre / blanc, s'ouvre vers la gauche sur les cartes) ; navigation « Étape précédente / suivante » sur « Comprendre », page affichée depuis le haut ; icône « Revoir » = loupe avec coche | Retours de test : info-bulle coupée par la carte, page ouverte en bas, pas de retour à l'étape précédente, icône circulaire peu parlante |
+| D-42 | 2026-11-05 | Les 40 entrées du catalogue initial sont regroupées en **16 modules** (un par lot de la Phase 5), les entrées devenant des sous-modules | 40 modules de 3 à 8 questions auraient donné un écran Modules illisible et des sessions trop courtes ; 16 modules de 15 à 33 questions restent lisibles et permettent la difficulté adaptative |
+| D-43 | 2026-11-05 | Les choix sont rééquilibrés pour que la bonne réponse ne se repère pas à sa longueur (la plus longue dans environ 34 % des cas, contre 81 % au premier jet) | Un QCM où « la plus longue est la bonne » ne mesure plus la compréhension |
+| D-44 | 2026-11-05 | **Tutoiement** dans toute l'application (interface et contenu), textes réécrits pour être plus naturels ; « À retravailler » devient **« En cours d'acquisition »** | Demande de la propriétaire : les mots ont une importance, le vouvoiement et les tournures administratives donnaient un ton robotique |
+| D-45 | 2026-11-05 | **Célébrations** : mot de félicitation varié à chaque bonne réponse, titre de bilan selon le score, confettis (composant `Celebration`, 1,8 s, sans son) pour une session à 80 % et plus, un niveau gagné ou une leçon terminée | Donner une récompense immédiate (dopamine) sans pression ni compte à rebours ; respect de « réduire les animations » |
+| D-46 | 2026-11-05 | Fiches Codex : champ **`en_bref`** (phrase simple) et **`analogie`** facultative, affichés avant la définition technique | Les fiches commençaient par une définition de dictionnaire, peu claire pour un premier contact |
+| D-47 | 2026-11-05 | Bouton **« Repartir de zéro »** dans Mon parcours (IPC `reset-progression`, confirmation obligatoire) | Pouvoir recommencer sans aller supprimer des fichiers dans %APPDATA% |
+| D-48 | 2026-11-05 | Progression par module limitée à **3 lignes + « Voir plus »** | 16 modules d'un coup surchargeaient l'écran |
+| D-49 | 2026-11-05 | Nouvelle mise en page de « Comprendre » (barre de lecture, frise des idées clés, terminal, bravo de fin) | L'ancienne page était une suite de blocs semblables, peu engageante |
+| D-50 | 2026-11-06 | **Taille des sessions plafonnée** : 35 questions pour une session complète de module, 15 pour une étape, 10 pour la révision rapide (`tailleSession`). Le tirage favorise les questions jamais vues (×3), ratées à la dernière tentative (×2,5) ou sous 50 % (×2), et rend rares celles réussies deux fois à 80 % et plus (×0,3) ; la progression garde `derniere` par question | Demande de la propriétaire : « s'il y a 60 questions je vais devoir faire les 60 ». Revoir d'abord ce qui n'est pas acquis donne des sessions utiles sans tout refaire |
+| D-51 | 2026-11-06 | **Banque élargie à 16 questions par étape** (720 au lieu de 348), surtout des mises en situation ; les nouveaux lots (`bq_*.py`) sont assemblés **après** les lots d'origine pour garder les identifiants des 348 questions existantes (et l'historique) ; `validate-data` refuse une étape de moins de 10 questions | Les sessions repassaient les mêmes questions, sans réflexion. Avec au moins 16 questions par étape, une session de 15 varie et peut privilégier le non-acquis |
+| D-52 | 2026-11-06 | Page **« Mon objectif »** (`/objectif`) : choix du poste visé (stage DevOps, CI/CD, cloud/plateforme, SRE), jauge « Tes bases » sur le socle commun, barre « Quand postuler ? » (moyenne des étapes indispensables, repères 40 / 70 / 90 %, une étape indispensable sous 40 % bloque le repère « Tu peux postuler ») et liste des étapes à travailler. Une étape est acquise à 70 % de questions réussies (dernière réponse) | Demande de la propriétaire : savoir si elle doit encore travailler les bases, lesquelles, et quand commencer à postuler. Référentiel construit à partir d'offres de stage et d'alternance relevées en novembre 2026 |
+| D-53 | 2026-11-06 | **Pas de percentile** (« top 40 % des candidat·es », « top 20 % des pairs ») | L'application est hors ligne et ne connaît aucune autre personne : un tel chiffre serait inventé. La barre se compare aux offres, ce qui est vérifiable ; l'explication est écrite sur la page |
 | D-29 | 2026-11-05 | Seul `electron-store` en `dependencies` | Le reste est intégré par Vite ; l'application packagée reste légère |
 | D-30 | 2026-11-05 | Node.js ≥ 22.12 exigé, vérifié avant `npm install` | Electron 44 ne s'installe pas avec Node 18 (fin de support en avril 2025) ; l'erreur d'origine (`ERR_REQUIRE_ESM`) était incompréhensible |

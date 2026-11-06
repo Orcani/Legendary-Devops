@@ -21,11 +21,15 @@ La commande ouvre Electron. Le navigateur peut aussi utiliser l’URL Vite affic
 
 ## Parcours
 
-- Trois onglets : **Accueil**, la page d'ouverture (niveau, prochain titre, vue d'ensemble, sous-modules à retravailler, progression par module, dernières sessions), **Modules** (modules regroupés par priorité P1/P2/P3, pour explorer) et **Codex**.
+- Au premier lancement, l'écran **« Par où commencer ? »** explique la méthode : **Comprendre** (lire l'étape), **S'entraîner** (QCM), **Revoir** (ce qui reste fragile).
+- Quatre onglets : **Mon parcours**, la page d'ouverture (un seul bouton principal « Prochaine étape conseillée », niveau, vue d'ensemble, étapes en cours d'acquisition, progression par module, dernières sessions), **Modules** (modules regroupés par priorité P1/P2/P3, pour explorer), **Codex** et **Mon objectif**.
+- **Mon objectif** : tu choisis le poste visé (stage DevOps, CI/CD, cloud et plateforme, SRE). La jauge « Tes bases » montre le socle que toutes les offres supposent, la barre « Quand postuler ? » ta moyenne sur les étapes indispensables (repères 40, 70 et 90 %), et la page liste les étapes qui te rapprochent le plus du poste. Pas de classement par rapport à d'autres personnes : l'application ne les connaît pas.
+- Chaque étape d'un module a une page **« Comprendre »** : objectifs, notions expliquées simplement (avec lien vers la fiche Codex), schéma, exemple à copier et l'essentiel à retenir, puis le bouton « S'entraîner sur cette étape ». La lecture est conseillée, jamais obligatoire.
+- Les badges P1/P2/P3 affichent leur signification au survol (et en toutes lettres sur la page d'un module).
 - Aucune série de jours ni compte à rebours : faire une pause ne fait rien perdre.
 - La page d'un module explique ce qu'il couvre (champ `resume`), liste ses notions clés et donne le lien vers le cours.
-- Les sous-modules forment un parcours numéroté. Chaque étape a son résumé, son statut (pas encore travaillé, à retravailler, en bonne voie, maîtrisé) et son propre QCM.
-- « Réviser tout le module » propose une **révision rapide** (10 questions au hasard, si la sélection en compte plus de 10) ou **toutes les questions**. Le sélecteur « Déjà travaillés » limite aux sous-modules pratiqués.
+- Les sous-modules forment un parcours numéroté. Chaque étape a son résumé, son statut (pas encore travaillé, en cours d'acquisition, en bonne voie, maîtrisé), un bouton « Comprendre » et un bouton « S'entraîner ».
+- « Réviser tout le module » propose une **révision rapide** (10 questions) ou une **session complète** (35 questions au plus). Une étape seule donne 15 questions au plus. Le tirage propose d'abord les questions jamais vues ou ratées la dernière fois, et adapte la difficulté à ton niveau. Le sélecteur « Déjà travaillés » limite aux sous-modules pratiqués.
 - Pendant un QCM : choix mélangés et repérés A–D, score en direct dans la barre latérale.
 - Une session interrompue est proposée à la reprise ; on peut aussi recommencer à zéro.
 - Le bilan liste les erreurs avec la bonne réponse et permet de rejouer uniquement les erreurs.
@@ -50,12 +54,13 @@ Electron utilise `progression.json` dans `%APPDATA%\legendary-devops` (Windows) 
 
 ```powershell
 npm test
+npm run format           # met le code en forme (Prettier)
 npm run lint
 npm run build            # vérifie d'abord dataApp.json (npm run validate-data)
-npm run test:electron
+npm run test:electron    # parcours réel, sur un jeu de données de test figé (scripts/fixtures)
 ```
 
-Le dernier test utilise des fenêtres masquées et un profil temporaire distinct de votre progression. Il teste le parcours réel, ferme puis relance Electron, et teste aussi le chemin navigateur sans preload. Les captures sont enregistrées dans `.test-artifacts`.
+Le dernier test utilise des fenêtres masquées et un profil temporaire distinct de ta progression. Il teste le parcours réel, ferme puis relance Electron, et teste aussi le chemin navigateur sans preload. Les captures sont enregistrées dans `.test-artifacts`.
 
 ## Modifier le contenu
 
@@ -67,7 +72,7 @@ npm run validate-data
 
 Le script signale les **erreurs** qui casseraient l'application (moins de 4 choix, référence inconnue, champ obligatoire manquant…) et les **avertissements** pour ce qui reste à compléter (module sans question, fiche « voir aussi » pas encore rédigée). `npm run build` refuse de construire si une erreur subsiste.
 
-Le contenu actuel comprend 3 modules, 3 questions et 6 fiches Codex.
+Le contenu actuel comprend 16 modules, 45 étapes de 16 questions chacune (720 questions) et 123 fiches Codex. Chaque étape doit garder au moins 10 questions (`validate-data` refuse sinon). Les postes de la page « Mon objectif » sont décrits dans la clé `objectifs`.
 
 Pour ajouter un module, renseigner aussi `resume` (2-3 phrases) pour le module et chacun de ses sous-modules, et vérifier que la valeur de `icon` existe dans `src/components/shared/ModuleIcon.jsx`.
 
@@ -78,7 +83,7 @@ npm run dist:win     # sur Windows : release/Legendary-DevOps-Setup-<version>.ex
 npm run dist:mac     # sur un Mac uniquement : release/Legendary-DevOps-<version>-<arch>.dmg
 ```
 
-- L'installateur Windows laisse choisir le dossier d'installation et crée un raccourci « Legendary DevOps ».
+- L'installateur Windows laisse choisir le dossier d'installation et crée un raccourci « Legendary DevOps » sur le bureau et dans le menu Démarrer. Réinstaller une nouvelle version garde ta progression (elle est dans `%APPDATA%`, pas dans le dossier d'installation).
 - Après installation, le contenu reste modifiable : `resources/data/dataApp.json` dans le dossier d'installation (Windows) ou `Legendary DevOps.app/Contents/Resources/data/dataApp.json` (macOS).
 - Les installateurs ne sont pas encore signés : au premier lancement, Windows SmartScreen affiche « Windows a protégé votre ordinateur » (cliquer sur « Informations complémentaires » puis « Exécuter quand même ») et macOS demande d'ouvrir l'application par clic droit > Ouvrir.
 

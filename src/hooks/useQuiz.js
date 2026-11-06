@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { tirerQuestions } from '../lib/quizSelection'
+import { tirerQuestions } from '../lib/selection'
+import { tirerQuestionsAdaptees } from '../lib/difficulte'
 import { PREFIXE_BROUILLON } from '../lib/brouillons'
 
 /**
@@ -8,27 +9,58 @@ import { PREFIXE_BROUILLON } from '../lib/brouillons'
  * - Un brouillon déjà commencé n'est jamais repris en silence : `pendingResume`
  *   demande à l'utilisateur de reprendre ou de recommencer.
  */
-export default function useQuiz({ moduleId, questions: pool, limit, sessionKey, onSaveSession }) {
+export default function useQuiz({
+  moduleId,
+  questions: pool,
+  limit,
+  level = 'debutant',
+  history = {},
+  sessionKey,
+  onSaveSession,
+  autoResume = false,
+}) {
   const draftKey = PREFIXE_BROUILLON + sessionKey
   const makeSession = ids => {
-    const tirage = ids || tirerQuestions(pool, limit).map(q => q.id)
-    const ordres = Object.fromEntries(tirage.map(id => {
-      const q = pool.find(p => p.id === id)
-      return [id, tirerQuestions(q.choix, 0).map(c => c.id)]
-    }))
-    return { id: crypto.randomUUID(), ids: tirage, ordres, index: 0, answers: {}, startedAt: Date.now(), finishing: false }
+    // Questions tirées selon le palier de difficulté du module (D-40) ; l'ordre des choix reste aléatoire.
+    const tirage = ids || tirerQuestionsAdaptees(pool, limit, level, Math.random, history).map(q => q.id)
+    const ordres = Object.fromEntries(
+      tirage.map(id => {
+        const q = pool.find(p => p.id === id)
+        return [id, tirerQuestions(q.choix, 0).map(c => c.id)]
+      }),
+    )
+    return {
+      id: crypto.randomUUID(),
+      ids: tirage,
+      ordres,
+      index: 0,
+      answers: {},
+      startedAt: Date.now(),
+      finishing: false,
+    }
   }
   const [initial] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(draftKey))
-      if (saved?.ids?.length && saved.ids.every(id => pool.some(q => q.id === id)) &&
-          saved.index >= 0 && saved.index < saved.ids.length && saved.answers && saved.id) return { session: saved, restored: true }
-    } catch { /* Un brouillon illisible n'empêche pas une nouvelle session. */ }
+      if (
+        saved?.ids?.length &&
+        saved.ids.every(id => pool.some(q => q.id === id)) &&
+        saved.index >= 0 &&
+        saved.index < saved.ids.length &&
+        saved.answers &&
+        saved.id
+      )
+        return { session: saved, restored: true }
+    } catch {
+      /* Un brouillon illisible n'empêche pas une nouvelle session. */
+    }
     return { session: makeSession(), restored: false }
   })
   const [session, setSession] = useState(initial.session)
   // Proposer la reprise seulement si au moins une réponse avait été donnée.
-  const [pendingResume, setPendingResume] = useState(initial.restored && Object.keys(initial.session.answers).length > 0)
+  const [pendingResume, setPendingResume] = useState(
+    !autoResume && initial.restored && Object.keys(initial.session.answers).length > 0,
+  )
   const [showTip, setShowTip] = useState(false)
   const [sessionSummary, setSessionSummary] = useState(null)
   const [saveError, setSaveError] = useState(null)
@@ -41,9 +73,9 @@ export default function useQuiz({ moduleId, questions: pool, limit, sessionKey, 
   // Choix dans l'ordre mélangé du brouillon (ordre d'origine pour un ancien brouillon sans `ordres`).
   const ordre = session.ordres?.[currentQuestion?.id]
   const currentChoices = currentQuestion
-    ? (ordre?.length === currentQuestion.choix.length
+    ? ordre?.length === currentQuestion.choix.length
       ? ordre.map(id => currentQuestion.choix.find(c => c.id === id)).filter(Boolean)
-      : currentQuestion.choix)
+      : currentQuestion.choix
     : []
   const selectedChoice = session.answers[currentQuestion?.id]?.selectedChoice ?? null
   const isAnswered = selectedChoice !== null
@@ -62,47 +94,102 @@ export default function useQuiz({ moduleId, questions: pool, limit, sessionKey, 
 
   useEffect(() => {
     if (sessionSummary) return
-    try { localStorage.setItem(draftKey, JSON.stringify(session)); setDraftError(null) }
-    catch { setDraftError('Le brouillon ne peut pas être conservé. Terminez la session avant de fermer.') }
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(session))
+      setDraftError(null)
+    } catch {
+      setDraftError('Je n’arrive pas à garder ta session en mémoire. Termine-la avant de fermer l’application.')
+    }
   }, [session, draftKey, sessionSummary])
 
   const finishSession = async () => {
     if (busy.current || sessionSummary) return
-    busy.current = true; setIsSaving(true); setSaveError(null)
-    const finished = { ...session, finishing: true,
-      elapsedSeconds: session.elapsedSeconds || Math.max(1, Math.round((Date.now() - session.startedAt) / 1000)) }
+    busy.current = true
+    setIsSaving(true)
+    setSaveError(null)
+    const finished = {
+      ...session,
+      finishing: true,
+      elapsedSeconds: session.elapsedSeconds || Math.max(1, Math.round((Date.now() - session.startedAt) / 1000)),
+    }
     setSession(finished)
     try {
       // Le même ID est conservé après un échec ou une fermeture pendant l'envoi.
       localStorage.setItem(draftKey, JSON.stringify(finished))
-      const result = await onSaveSession({ id: session.id, module_id: moduleId,
-        duree_secondes: finished.elapsedSeconds, answers: Object.values(session.answers) })
+      const result = await onSaveSession({
+        id: session.id,
+        module_id: moduleId,
+        duree_secondes: finished.elapsedSeconds,
+        answers: Object.values(session.answers),
+      })
       if (!result?.success) throw new Error(result?.error || 'Sauvegarde impossible.')
-      setSessionSummary({ ...result.session, niveauAvant: result.niveauAvant ?? null, niveauApres: result.progression?.niveau ?? null })
-      try { localStorage.removeItem(draftKey) } catch { /* ID déjà enregistré : nouvelle tentative sans doublon. */ }
-    } catch (e) { setSaveError(e.message) }
-    finally { busy.current = false; setIsSaving(false) }
+      setSessionSummary({
+        ...result.session,
+        niveauAvant: result.niveauAvant ?? null,
+        niveauApres: result.progression?.niveau ?? null,
+      })
+      try {
+        localStorage.removeItem(draftKey)
+      } catch {
+        /* ID déjà enregistré : nouvelle tentative sans doublon. */
+      }
+    } catch (e) {
+      setSaveError(e.message)
+    } finally {
+      busy.current = false
+      setIsSaving(false)
+    }
   }
   const selectChoice = choice => {
     if (pendingResume || isAnswered || session.finishing || !currentQuestion?.choix.some(c => c.id === choice)) return
-    setSession(prev => ({ ...prev, answers: { ...prev.answers,
-      [currentQuestion.id]: { questionId: currentQuestion.id, selectedChoice: choice } } }))
+    setSession(prev => ({
+      ...prev,
+      answers: { ...prev.answers, [currentQuestion.id]: { questionId: currentQuestion.id, selectedChoice: choice } },
+    }))
   }
   const nextQuestion = () => {
     if (pendingResume || !isAnswered || busy.current) return
-    if (session.index + 1 === session.ids.length) { void finishSession(); return }
-    setSession(prev => ({ ...prev, index: prev.index + 1 })); setShowTip(false)
+    if (session.index + 1 === session.ids.length) {
+      void finishSession()
+      return
+    }
+    setSession(prev => ({ ...prev, index: prev.index + 1 }))
+    setShowTip(false)
   }
   // Sans argument : nouveau tirage complet. Avec une liste d'ids : rejouer ces questions (ex. les erreurs).
   const restartQuiz = ids => {
     setSession(makeSession(Array.isArray(ids) && ids.length ? ids : undefined))
-    setSessionSummary(null); setSaveError(null); setShowTip(false); setPendingResume(false)
+    setSessionSummary(null)
+    setSaveError(null)
+    setShowTip(false)
+    setPendingResume(false)
   }
-  return { currentIndex: session.index, currentQuestion, currentChoices, totalQuestions: session.ids.length,
-    answeredCount: Object.keys(session.answers).length, results, correctCount, incorrectCount, mistakes,
-    selectedChoice, isAnswered, showTip, isFinished: !!sessionSummary, sessionSummary,
-    pendingResume, resumeSession: () => setPendingResume(false),
-    selectChoice, toggleTip: () => setShowTip(v => !v), nextQuestion, restartQuiz,
+  return {
+    currentIndex: session.index,
+    currentQuestion,
+    currentChoices,
+    totalQuestions: session.ids.length,
+    answeredCount: Object.keys(session.answers).length,
+    results,
+    correctCount,
+    incorrectCount,
+    mistakes,
+    selectedChoice,
+    isAnswered,
+    showTip,
+    isFinished: !!sessionSummary,
+    sessionSummary,
+    pendingResume,
+    resumeSession: () => setPendingResume(false),
+    selectChoice,
+    toggleTip: () => setShowTip(v => !v),
+    nextQuestion,
+    restartQuiz,
     replayMistakes: () => restartQuiz(mistakes.map(m => m.question.id)),
-    isSaving, saveError, draftError, retrySave: finishSession, finishing: session.finishing }
+    isSaving,
+    saveError,
+    draftError,
+    retrySave: finishSession,
+    finishing: session.finishing,
+  }
 }

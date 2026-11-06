@@ -8,19 +8,24 @@ import { CheckCircle2, XCircle } from 'lucide-react'
  */
 const STYLES = {
   // État neutre interactif
-  neutre: 'bg-white border-slate-200 text-slate-800 hover:border-blue-400 hover:bg-slate-50 shadow-sm ' +
+  neutre:
+    'bg-white border-slate-200 text-slate-800 hover:border-blue-400 hover:bg-slate-50 shadow-sm ' +
     'dark:bg-slate-900 dark:border-slate-800 dark:text-slate-200 dark:hover:border-blue-500 dark:hover:bg-slate-800',
   // Choisi par l'utilisateur et c'est la bonne réponse
-  correct: 'border-2 bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold shadow-sm ' +
+  correct:
+    'border-2 bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold shadow-sm ' +
     'dark:bg-emerald-950/50 dark:text-emerald-200',
   // Choisi par l'utilisateur et c'est faux
-  incorrect: 'border-2 bg-rose-50 border-rose-500 text-rose-900 font-semibold shadow-sm ' +
+  incorrect:
+    'border-2 bg-rose-50 border-rose-500 text-rose-900 font-semibold shadow-sm ' +
     'dark:bg-rose-950/50 dark:text-rose-200',
   // Bonne réponse révélée quand l'utilisateur s'est trompé
-  revele: 'border-2 bg-emerald-50/60 border-emerald-400 text-emerald-800 font-medium ' +
+  revele:
+    'border-2 bg-emerald-50/60 border-emerald-400 text-emerald-800 font-medium ' +
     'dark:bg-emerald-950/20 dark:border-emerald-500/60 dark:text-emerald-300',
   // Autres choix : atténués mais lisibles (contraste ≥ 4,5:1, pas d'opacité globale)
-  grise: 'bg-slate-50 border-slate-200 text-slate-500 cursor-default ' +
+  grise:
+    'bg-slate-50 border-slate-200 text-slate-500 cursor-default ' +
     'dark:bg-slate-900/40 dark:border-slate-800 dark:text-slate-400',
 }
 const STYLES_LETTRE = {
@@ -32,8 +37,8 @@ const STYLES_LETTRE = {
 }
 
 export default function AnswerChoice({
-  choix,
-  lettre,
+  choice,
+  letter,
   isSelected = false,
   isCorrect = false,
   isAnswered = false,
@@ -60,15 +65,25 @@ export default function AnswerChoice({
   return (
     <motion.button
       type="button"
-      onClick={() => !isAnswered && onSelect(choix.id)}
+      onClick={() => !isAnswered && onSelect(choice.id)}
       disabled={isAnswered}
       whileHover={!isAnswered ? { scale: 1.004 } : {}}
       whileTap={!isAnswered ? { scale: 0.995 } : {}}
       className={`w-full p-4 md:p-5 rounded-2xl border text-left transition-colors duration-150 flex items-center gap-4 text-base ${STYLES[etat]}`}
     >
-      {lettre && <span className={'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ' + STYLES_LETTRE[etat]}
-        aria-hidden="true">{lettre}</span>}
-      <span className="flex-1 leading-relaxed select-none" data-choice-text>{choix.texte}</span>
+      {letter && (
+        <span
+          className={
+            'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ' + STYLES_LETTRE[etat]
+          }
+          aria-hidden="true"
+        >
+          {letter}
+        </span>
+      )}
+      <span className="flex-1 leading-relaxed select-none" data-choice-text>
+        {choice.texte}
+      </span>
       {icon}
     </motion.button>
   )
